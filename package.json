@@ -1,0 +1,23 @@
+{
+  "name": "natours-app",
+  "version": "1.0.0",
+  "description": "mern stack refresher ",
+  "main": "app.js",
+  "scripts": {
+    "start": "nodemon sever.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/YousefBe/MERNRefresher.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/YousefBe/MERNRefresher/issues"
+  },
+  "homepage": "https://github.com/YousefBe/MERNRefresher#readme",
+  "dependencies": {
+    "express": "^4.18.2",
+    "morgan": "^1.10.0"
+  }
+}
