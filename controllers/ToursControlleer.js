@@ -15,6 +15,16 @@ const filterTours = (id)=>{
     return tours.filter(tr => tr.id !== id);
 }
 
+const checkId = (req , res, next , id)=>{
+    if(req.params.id * 1 > tours.length  ){
+        return res.status(404).json({
+            status : 404,
+            message : "Invalid Tour ID !",
+        });
+    }
+    next();
+}
+
 //INDEX 
 exports.getTours = (req, res) => {
     console.log(req.timeStamp);
