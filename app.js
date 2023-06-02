@@ -2,7 +2,6 @@ const express = require('express');
 const morgan = require('morgan');
 
 const app = express();
-
 const toursRoutes = require('./routes/tours');
 const usersRoutes = require('./routes/users');
 //we need to add this to use express middlewares
@@ -10,7 +9,8 @@ const usersRoutes = require('./routes/users');
 const BASE_URL = '/api/v1';
 
 app.use(express.json());
-if (process.env.NODE_ENV !== 'production') {
+// parse application/x-www-form-urlencoded, basically can only parse incoming Request Object if strings or arrays
+app.use(express.urlencoded({ extended: false }));if (process.env.NODE_ENV !== 'production') {
   app.use(morgan('dev'));
 }
 app.use(express.static(`${__dirname}/public`));

@@ -1,4 +1,5 @@
 const express = require('express');
+
 const router = express.Router();
 const ToursController = require('../controllers/ToursControlleer');
 
@@ -11,6 +12,9 @@ const ToursController = require('../controllers/ToursControlleer');
 // app.delete('/api/v1/tours/:id' , ToursController.deleteTour)
 
 router.route('/').get(ToursController.getTours).post(ToursController.addTour);
+router.route('/best-five-tours').get(ToursController.getBestTours ,ToursController.getTours);
+
+// router.param('id',ToursController.checkId);
 
 router
   .route('/:id')
