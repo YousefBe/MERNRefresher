@@ -13,6 +13,8 @@ const ToursController = require('../controllers/ToursControlleer');
 
 router.route('/').get(ToursController.getTours).post(ToursController.addTour);
 router.route('/best-five-tours').get(ToursController.getBestTours ,ToursController.getTours);
+router.route('/stats').get( ToursController.getTourStats);
+router.route('/monthly-plan/:year').get( ToursController.getMonthlyPlan);
 
 // router.param('id',ToursController.checkId);
 
