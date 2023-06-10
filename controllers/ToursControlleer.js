@@ -1,4 +1,6 @@
 const TourModel = require('../models/Tour');
+const AppError = require('../utls/appError');
+const catchAsync = require('../utls/catchAsync');
 
 class ApiFeatures {
   constructor(query, queryString) {
@@ -129,41 +131,45 @@ exports.getTours = async (req, res) => {
   }
 };
 
-exports.addTour = async (req, res) => {
+exports.addTour = catchAsync(async (req, res , next) => {
   const newTour = await TourModel.create(req.body);
-  try {
-    return res.status(201).json({
-      status: 201,
-      data: {
-        tour: newTour
-      },
-      message: 'Tour added successfully'
-    });
-  } catch (error) {
-    res.status(400).json({
-      status: 400,
-      message: error
-    });
-  }
-};
+  return res.status(201).json({
+    status: 201,
+    data: {
+      tour: newTour
+    },
+    message: 'Tour added successfully'
+  });
+  // try {
+  //   return res.status(201).json({
+  //     status: 201,
+  //     data: {
+  //       tour: newTour
+  //     },
+  //     message: 'Tour added successfully'
+  //   });
+  // } catch (error) {
+  //   res.status(400).json({
+  //     status: 400,
+  //     message: error
+  //   });
+  // }
+});
 
-exports.getTour = async (req, res) => {
-  try {
-    const tour = await TourModel.findById(req.params.id);
-    return res.status(201).json({
-      status: 201,
-      data: {
-        tour
-      },
-      message: 'Tour added successfully'
-    });
-  } catch (err) {
-    return res.status(201).json({
-      status: 'failed',
-      message: err.message
-    });
+exports.getTour = catchAsync( async (req, res ,next) => {
+  
+  const tour = await TourModel.findById(req.params.id);
+  if (!tour) {
+    return next(new AppError('No tour found with that ID', 404));
   }
-};
+  return res.status(201).json({
+    status: 201,
+    data: {
+      tour
+    },
+    message: 'Tour added successfully'
+  });
+});
 
 exports.updateTour = async (req, res) => {
   try {
@@ -271,11 +277,11 @@ exports.getMonthlyPlan = async (req, res) => {
       { $project: { _id: 0 } },
       {
         $sort: {
-          count : -1
+          count: -1
         }
       },
       {
-        $limit : 5
+        $limit: 5
       }
     ]);
     return res.status(200).json({
