@@ -1,6 +1,11 @@
 const express = require('express');
+
 const router = express.Router();
 const UsersController = require('../controllers/UsersController');
+const AuthController = require('../controllers/AuthController');
+
+router.post('/sigup', AuthController.signup)
+router.post('/login', AuthController.login)
 
 
 router
@@ -15,4 +20,4 @@ router
   .delete(UsersController.deleteUser);
 
 
-  module.exports = router;
+  module.exports = router; 
