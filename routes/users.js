@@ -8,10 +8,17 @@ router.post('/sigup', AuthController.signup)
 router.post('/login', AuthController.login)
 
 
+router.post('/forggtoPassword', AuthController.forggotPassword)
+router.patch('/resetPassword/:token', AuthController.resetPasswrod)
+router.patch('/updateMyPassword', AuthController.protect , AuthController.updatePassword);
+router.patch('/updateMe', UsersController.updateMe);
+
+
 router
   .route('/')
   .get(UsersController.getUsers)
   .post(UsersController.addUser);
+  
 
 router
   .route('/:id')
