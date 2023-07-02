@@ -11,6 +11,7 @@ const hpp = require('hpp')
 const app = express();
 const toursRoutes = require('./routes/tours');
 const usersRoutes = require('./routes/users');
+const reviewRoutes = require('./routes/review');
 const AppError = require('./utls/appError');
 const ErrorController = require('./controllers/ErrorController');
 const User = require('./models/User');
@@ -63,6 +64,7 @@ app.use(async (req, res, next) => {
 
 app.use(`${BASE_URL}/tours`, toursRoutes);
 app.use(`${BASE_URL}/users`, usersRoutes);
+app.use(`${BASE_URL}/reviews`, reviewRoutes);
 
 app.all('*' , (req, res, next) => {
   // res.status(404).json({
