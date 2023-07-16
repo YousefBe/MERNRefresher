@@ -11,7 +11,8 @@ router.post('/login', AuthController.login)
 router.post('/forggtoPassword', AuthController.forggotPassword)
 router.patch('/resetPassword/:token', AuthController.resetPasswrod)
 router.patch('/updateMyPassword', AuthController.protect , AuthController.updatePassword);
-router.patch('/updateMe', UsersController.updateMe);
+router.patch('/updateMe', AuthController.protect, UsersController.exportUserPhoto , UsersController.resizeUserPhoto ,UsersController.updateMe);
+
 
 
 router

@@ -1,6 +1,62 @@
 const TourModel = require('../models/Tour');
 const AppError = require('../utls/appError');
 const catchAsync = require('../utls/catchAsync');
+const multer = require('multer');
+const sharp = require('sharp');
+
+const multerStorage = multer.memoryStorage();
+
+const multerFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith('image')) {
+    cb(null, true);
+  } else {
+    cb(new AppError('not an image please upload only images!'), false);
+  }
+};
+
+const upload = multer({
+  storage: multerStorage,
+  fileFilter: multerFilter
+});
+
+// uplooad.array('images', 5);
+//
+exports.uploadTourImages = upload.fields([
+  { name: 'imageCover', maxCount: 1 },
+  { name: 'images', maxCount: 3 }
+]);
+
+exports.resizeImages = catchAsync(async (req, res, next) => {
+  if (!req.file.imageCover || !req.file.images) return next();
+
+  const imageFileName = `tour-${req.params.id}-${Date.now()}-cover.jpg`;
+
+  await sharp(req.file.imageCover[0].buffer)
+    .resize(2000, 1333)
+    .toFormat('jpeg')
+    .jpeg({ quality: 90 })
+    .toFile(`public/img/tours/${imageFileName}`);
+  req.body.imageCover = imageFileName;
+
+  req.body.images = [];
+
+  //always map the async code to have an array of promises
+  //then fire them all by awaiting Promise.all 
+  //only then you can call next();
+  await Promise.all(
+    req.file.images.forEach(async (file, i) => {
+      const fileName = `tour-${req.params.id}-${Date.now()}-${i + 1}.jpg`;
+      await sharp(file.buffer)
+        .resize(2000, 1333)
+        .toFormat('jpeg')
+        .jpeg({ quality: 90 })
+        .toFile(`public/img/tours/${fileName}`);
+      req.body.images.push(fileName);
+    })
+  );
+
+  next();
+});
 
 class ApiFeatures {
   constructor(query, queryString) {
@@ -134,7 +190,7 @@ exports.getTours = async (req, res) => {
   }
 };
 
-exports.addTour = catchAsync(async (req, res , next) => {
+exports.addTour = catchAsync(async (req, res, next) => {
   const newTour = await TourModel.create(req.body);
   return res.status(201).json({
     status: 201,
@@ -159,8 +215,7 @@ exports.addTour = catchAsync(async (req, res , next) => {
   // }
 });
 
-exports.getTour = catchAsync( async (req, res ,next) => {
-  
+exports.getTour = catchAsync(async (req, res, next) => {
   const tour = await TourModel.findById(req.params.id).populate('reviews');
   if (!tour) {
     return next(new AppError('No tour found with that ID', 404));
@@ -175,11 +230,16 @@ exports.getTour = catchAsync( async (req, res ,next) => {
 });
 
 exports.updateTour = async (req, res) => {
+  console.log(req.body);
   try {
-    const updatedTour = TourModel.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true
-    });
+    const updatedTour = await TourModel.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      {
+        new: true,
+        runValidators: true
+      }
+    );
     return res.status(200).json({
       status: 201,
       data: {
@@ -299,65 +359,63 @@ exports.getMonthlyPlan = async (req, res) => {
   }
 };
 
-exports.getClosestTour = catchAsync(async (req , res ,next )=>{
-  const { distance, latlng , unit } = req.params;
-  console.log( req.params);
+exports.getClosestTour = catchAsync(async (req, res, next) => {
+  const { distance, latlng, unit } = req.params;
+  console.log(req.params);
 
-  const [lat , lng] = latlng.split(",")
+  const [lat, lng] = latlng.split(',');
   if (!lat || !lng) {
-    return next(new AppError("please provide a latitude and a longitude" , 400))
+    return next(new AppError('please provide a latitude and a longitude', 400));
   }
   const radius = unit === 'mi' ? distance / 3963.2 : distance / 6378.1;
   const tours = await TourModel.find({
-    startLocation : { $geoWithin : {$centerSphere : [[lng , lat] , radius]} }
+    startLocation: { $geoWithin: { $centerSphere: [[lng, lat], radius] } }
   });
   return res.status(200).json({
     status: 'success',
-    results : tours.length,
-    data: tours,
+    results: tours.length,
+    data: tours
   });
-})
+});
 
-exports.getDistances  = catchAsync(async (req , res , next )=>{
-  const { latlng , unit } = req.params;
-  console.log( req.params);
+exports.getDistances = catchAsync(async (req, res, next) => {
+  const { latlng, unit } = req.params;
+  console.log(req.params);
 
-  const multi = unit === 'mi' ? 0.000621371 :  0.001
+  const multi = unit === 'mi' ? 0.000621371 : 0.001;
 
-  const [lat , lng] = latlng.split(",")
+  const [lat, lng] = latlng.split(',');
   if (!lat || !lng) {
-    return next(new AppError("please provide a latitude and a longitude" , 400))
+    return next(new AppError('please provide a latitude and a longitude', 400));
   }
   //geoNear needs to be first in piplines array
-  // if you have onle one 2sphere index in your mongodb collection schema , geoNear will use it , otherwise u will have 
+  // if you have onle one 2sphere index in your mongodb collection schema , geoNear will use it , otherwise u will have
   //to specify field name
   const tours = await TourModel.aggregate([
     {
-      $geoNear : {
-        near : {
-          type : 'point',
-          coordinates: [lng * 1 , lat * 1 ]
+      $geoNear: {
+        near: {
+          type: 'point',
+          coordinates: [lng * 1, lat * 1]
         },
         distanceField: 'distance',
-        distanceMultiplier : multi
+        distanceMultiplier: multi
       }
     },
     {
-      $project : {
-        distance : 1 , 
-        name : 1 ,
-        _id : 1
+      $project: {
+        distance: 1,
+        name: 1,
+        _id: 1
       }
     }
   ]);
   return res.status(200).json({
     status: 'success',
-    results : tours.length,
-    data: tours,
+    results: tours.length,
+    data: tours
   });
-})
-
-
+});
 
 //============================================================================
 
